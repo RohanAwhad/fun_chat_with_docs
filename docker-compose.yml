@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+
+  redis:
+    image: "redis:alpine"
+
+  crawler:
+    build: "/Users/rohan/1_Project/fun_crawler"
+    command: "uvicorn main:app --host 0.0.0.0 --port 8001"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+
+  readable:
+    build: "/Users/rohan/1_Project/fun_readable"
+    command: "uvicorn api:app --host 0.0.0.0 --port 8002"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
