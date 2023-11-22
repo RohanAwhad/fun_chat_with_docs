@@ -1,2 +1,3 @@
 .dev.env
+logs
 run_script.sh
