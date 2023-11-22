@@ -60,15 +60,13 @@ es_client = elasticsearch.Elasticsearch(
     ]
 )
 ES_INDEX = os.getenv("ES_INDEX", "test")
-res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
-print(len(res))
-
+EMBED_DIM = int(os.getenv("EMBED_DIM", 768))
 mapping = {
     "mappings": {
         "properties": {
             "link": {"type": "keyword"},
             "chunk": {"type": "text"},
-            "embeddings": {"type": "dense_vector", "dims": len(res)},
+            "embeddings": {"type": "dense_vector", "dims": EMBED_DIM},
         }
     }
 }
