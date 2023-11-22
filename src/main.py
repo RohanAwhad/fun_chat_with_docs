@@ -1,8 +1,9 @@
 import os
 import elasticsearch
+import openai
 import redis
 import requests
-import openai
+import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,7 +48,13 @@ es_client = elasticsearch.Elasticsearch(
 )
 ES_INDEX = os.getenv("ES_INDEX", "test")
 
-res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
+while True:
+    try:
+        res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
+        break
+    except:
+        time.sleep(1)
+
 mapping = {
     "mappings": {
         "properties": {
