@@ -51,9 +51,11 @@ ES_INDEX = os.getenv("ES_INDEX", "test")
 while True:
     try:
         res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
-        break
+        if res.status_code == 200:
+            break
     except:
         time.sleep(1)
+        continue
 
 mapping = {
     "mappings": {
@@ -126,7 +128,7 @@ async def index(inp: IndexInput):
     chunk_size = 3
     for link, text in link_to_text.items():
         # extract sentences
-        sentences = sent_tokenize(text)
+        sentences = [x for x in sent_tokenize(text) if x]
         chunks = [
             " ".join(sentences[i : i + chunk_size])
             for i in range(0, len(sentences), chunk_size)
