@@ -52,6 +52,8 @@ services:
     command: "uvicorn main:app --host 0.0.0.0 --port 8000"
     ports:
       - "80:8000"
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       - redis
       - crawler
@@ -59,12 +61,14 @@ services:
       - embedder
       - elasticsearch
     environment:
+      - LOGGING_DIR=/app/logs
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
       - ES_HOST=elasticsearch
       - ES_PORT=9200
       - ES_INDEX=articles
+      - ES_SEARCH_SIZE=25
       - CRAWLER_URL=http://crawler:8001/crawl
       - READABLE_URL=http://readable:8002/convert
       - EMBEDDER_URL=http://embedder:8003/embed_batch
