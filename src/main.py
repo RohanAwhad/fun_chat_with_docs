@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from nltk.tokenize import sent_tokenize
 
+# TODO (rohan): add healthchecks
 CRAWLER_URL = os.getenv("CRAWLER_URL", "http://localhost:8001")
 READABLE_URL = os.getenv("READABLE_URL", "http://localhost:8002")
 EMBEDDER_URL = os.getenv("EMBEDDER_URL", "http://localhost:8003")
@@ -47,15 +48,8 @@ es_client = elasticsearch.Elasticsearch(
     ]
 )
 ES_INDEX = os.getenv("ES_INDEX", "test")
-
-while True:
-    try:
-        res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
-        if res.status_code == 200:
-            break
-    except:
-        time.sleep(1)
-        continue
+res = requests.post(EMBEDDER_URL, json=["test"]).json()["embeddings"][0]
+print(len(res))
 
 mapping = {
     "mappings": {
