@@ -69,6 +69,7 @@ services:
       - ES_PORT=9200
       - ES_INDEX=articles
       - ES_SEARCH_SIZE=25
+      - LLM_TEMPERATURE=0.5
       - CRAWLER_URL=http://crawler:8001/crawl
       - READABLE_URL=http://readable:8002/convert
       - EMBEDDER_URL=http://embedder:8003/embed_batch

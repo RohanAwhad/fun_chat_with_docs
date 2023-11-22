@@ -36,12 +36,14 @@ prompt = """Answer the question provided at the end, using the following chunks:
 ---
 Question: {q}"""
 
+LLM_TEMPERATURE = os.getenv("LLM_TEMPERATURE", 0.4)
 
-def gpt_completion(prompt, temperature=0.4):
+
+def gpt_completion(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-1106",
         messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
+        temperature=LLM_TEMPERATURE,
     )
     return response["choices"][0]["message"]["content"]
 
