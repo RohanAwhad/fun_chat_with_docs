@@ -14,14 +14,15 @@ from pydantic import BaseModel
 
 LOGGING_DIR = os.getenv("LOGGING_DIR", "logs")
 logger.add(
-    f"{LOGGING_DIR}/{time:YYYY-MM-DD}.log",
-    format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+    f"{LOGGING_DIR}/{time.strftime('%Y-%m-%d')}.log",
+    format="{time} | {level} | {message}",
 )
 
 # TODO (rohan): add healthchecks
 CRAWLER_URL = os.getenv("CRAWLER_URL", "http://localhost:8001")
 READABLE_URL = os.getenv("READABLE_URL", "http://localhost:8002")
 EMBEDDER_URL = os.getenv("EMBEDDER_URL", "http://localhost:8003")
+RERANKER_URL = os.getenv("RERANKER_URL", "http://localhost:8004")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
@@ -37,6 +38,7 @@ prompt = """Answer the question provided at the end, using the following chunks:
 Question: {q}"""
 
 LLM_TEMPERATURE = os.getenv("LLM_TEMPERATURE", 0.4)
+REFERENCE_SIZE = os.getenv("REFERENCE_SIZE", 5)
 
 
 def gpt_completion(prompt):
@@ -200,11 +202,19 @@ async def query(q: str):
     for hit in search_results["hits"]["hits"]:
         retrieved_chunks.append(hit["_source"]["chunk"])
 
-    # TODO (rohan): add a reranker here
+    logger.debug("calling reranker")
+    res = requests.post(RERANKER_URL, json={"query": q, "passages": retrieved_chunks})
+    logger.debug(f"reranker response: {res.status_code}")
+    logger.debug(f"scores: {res.json()['scores']}")
+    scores = res.json()["scores"]
+    references = sorted(
+        zip(retrieved_chunks, scores), key=lambda x: x[1], reverse=True
+    )[:REFERENCE_SIZE]
 
+    logger.debug(f"references: {references}")
     gpt_prompt = prompt.format(
         retrieved_chunks="\n".join(
-            [f"[{i+1}] {chunk}" for i, chunk in enumerate(retrieved_chunks)]
+            [f"[{i+1}] {chunk}" for i, chunk in enumerate(references)]
         ),
         q=q,
     )

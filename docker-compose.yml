@@ -45,6 +45,15 @@ services:
         soft: -1
         hard: -1
 
+  reranker:
+    build: ${RERANKER_BUILD}
+    command: "uvicorn main:app --host 0.0.0.0 --port 8004"
+    environment:
+      - RERANKER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+      - BATCH_SIZE=8
+    ports:
+      - "8004:8004"
+
   controller:
     build:
       context: ./src
@@ -60,6 +69,7 @@ services:
       - readable
       - embedder
       - elasticsearch
+      - reranker
     environment:
       - LOGGING_DIR=/app/logs
       - REDIS_HOST=redis
@@ -73,4 +83,5 @@ services:
       - CRAWLER_URL=http://crawler:8001/crawl
       - READABLE_URL=http://readable:8002/convert
       - EMBEDDER_URL=http://embedder:8003/embed_batch
+      - RERANKER_URL=http://reranker:8004/rerank
       - OPENAI_API_KEY=${OPENAI_API_KEY}
