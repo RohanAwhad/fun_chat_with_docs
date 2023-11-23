@@ -6,7 +6,7 @@ import requests
 import time
 import traceback
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from nltk.tokenize import sent_tokenize
@@ -37,7 +37,7 @@ prompt = """Answer the question provided at the end, using the following chunks:
 ---
 Question: {q}"""
 
-LLM_TEMPERATURE = os.getenv("LLM_TEMPERATURE", 0.4)
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", 0.4))
 REFERENCE_SIZE = os.getenv("REFERENCE_SIZE", 5)
 
 
@@ -114,21 +114,24 @@ async def index(inp: IndexInput):
     logger.debug("calling crawler")
     res = requests.post(CRAWLER_URL, json=inp.model_dump())
     logger.debug(f"crawler done: {res.status_code}")
+    if res.status_code != 200:
+        logger.error(f"error while crawling: {res.text}")
+        return HTTPException(
+            status_code=500, detail=f"error while crawling. {res.text}"
+        )
     crawled_data = res.json()
     logger.debug(f"crawler response: {crawled_data}")
-    domain = None
-    all_links = set()
-    for data in crawled_data["data"]:
-        # TODO (rohan): use data[url] instead of domain. And handle relative urls
-        # extract domain from url
-        if domain is None:
-            domain = "/".join(data["url"].split("/")[:3])
-        all_links.update(data["links"])
+    # check if there is any error
+    if crawled_data["error"] is not None:
+        logger.error(f"error while crawling: {crawled_data['error']}")
+        return IndexOutput(status="error")
+
+    # get all links
+    all_links = crawled_data["data"]
 
     # call readable
     link_to_text = {}
-    for link in all_links:
-        final_url = f"{domain}{link}"
+    for final_url in all_links:
         try:
             logger.debug(f"calling readable for '{final_url}'")
             res = requests.post(READABLE_URL, json={"url": final_url})
@@ -138,8 +141,8 @@ async def index(inp: IndexInput):
             text = data["text"].strip()
             link_to_text[final_url] = text
         except Exception as e:
-            logger.error(f"error while processing '{final_url}': {e}")
             logger.error(traceback.print_exc())
+            logger.error(f"error while processing '{final_url}': {e}")
 
     chunk_size = 3
     for link, text in link_to_text.items():

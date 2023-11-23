@@ -45,15 +45,6 @@ services:
         soft: -1
         hard: -1
 
-  reranker:
-    build: ${RERANKER_BUILD}
-    command: "uvicorn main:app --host 0.0.0.0 --port 8004"
-    environment:
-      - RERANKER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
-      - BATCH_SIZE=8
-    ports:
-      - "8004:8004"
-
   controller:
     build:
       context: ./src
@@ -65,11 +56,9 @@ services:
       - ./logs:/app/logs
     depends_on:
       - redis
-      - crawler
       - readable
       - embedder
       - elasticsearch
-      - reranker
     environment:
       - LOGGING_DIR=/app/logs
       - REDIS_HOST=redis
@@ -78,11 +67,12 @@ services:
       - ES_HOST=elasticsearch
       - ES_PORT=9200
       - ES_INDEX=articles
-      - ES_SEARCH_SIZE=25
+      - ES_SEARCH_SIZE=50
       - EMBED_DIM=768
+      - REFERENCE_SIZE=10
       - LLM_TEMPERATURE=0.5
-      - CRAWLER_URL=http://crawler:8001/crawl
+      - CRAWLER_URL=https://fun-crawler-633f94e2f022.herokuapp.com/crawl
       - READABLE_URL=http://readable:8002/convert
       - EMBEDDER_URL=http://embedder:8003/embed_batch
-      - RERANKER_URL=http://reranker:8004/rerank
+      - RERANKER_URL=https://fun-reranker-84b02fb456da.herokuapp.com/rerank
       - OPENAI_API_KEY=${OPENAI_API_KEY}
