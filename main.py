@@ -42,7 +42,7 @@ prompt = """Answer the question provided at the end, using the following chunks:
 Question: {q}"""
 
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", 0.4))
-REFERENCE_SIZE = os.getenv("REFERENCE_SIZE", 5)
+REFERENCE_SIZE = int(os.getenv("REFERENCE_SIZE", 5))
 
 
 def gpt_completion(prompt):
@@ -280,7 +280,7 @@ async def query(q: str):
     logger.debug(f"references: {references}")
     gpt_prompt = prompt.format(
         retrieved_chunks="\n".join(
-            [f"[{i+1}] {chunk}" for i, chunk in enumerate(references)]
+            [f"[{i+1}] {chunk[0]}" for i, chunk in enumerate(references)]
         ),
         q=q,
     )
