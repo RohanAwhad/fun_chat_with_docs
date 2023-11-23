@@ -102,6 +102,7 @@ except Exception as e:
 
 ES_INDEX = os.getenv("ES_INDEX", "test")
 EMBED_DIM = int(os.getenv("EMBED_DIM", 768))
+logger.info(f"EMBED_DIM: {EMBED_DIM}")
 mapping = {
     "mappings": {
         "properties": {
