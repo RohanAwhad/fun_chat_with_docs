@@ -27,6 +27,7 @@ READABLE_URL = os.getenv("READABLE_URL", "http://localhost:8002")
 EMBEDDER_URL = os.getenv("EMBEDDER_URL", "http://localhost:8003")
 RERANKER_URL = os.getenv("RERANKER_URL", "http://localhost:8004")
 openai.api_key = os.getenv("OPENAI_API_KEY")
+logger.debug("Microservice URLs and API keys loaded")
 
 
 # LLM Setup
@@ -52,6 +53,8 @@ def gpt_completion(prompt):
     )
     return response["choices"][0]["message"]["content"]
 
+
+logger.debug("LLM setup done")
 
 # ES Setup
 logger.debug("connecting to ES")
@@ -97,6 +100,7 @@ try:
         )
 
     es_client.ping()
+    logger.debug("connected to ES")
 except Exception as e:
     logger.error(f"error while connecting to ES: {e}")
     exit(1)
@@ -123,14 +127,25 @@ def add_to_es(link: str, chunk: str, embeddings: list):
     es_client.index(index=ES_INDEX, id=link, body=doc)
 
 
+logger.debug("ES setup done")
+
+
 # REDIS Setup
-redis_client = redis.Redis(
-    host=os.getenv("REDIS_HOST", "localhost"),
-    port=os.getenv("REDIS_PORT", 6379),
-    db=os.getenv("REDIS_DB", 0),
-)
+logger.debug("connecting to redis")
+try:
+    redis_client = redis.Redis(
+        host=os.getenv("REDIS_HOST", "localhost"),
+        port=os.getenv("REDIS_PORT", 6379),
+        db=os.getenv("REDIS_DB", 0),
+    )
+    redis_client.ping()
+    logger.debug("connected to redis")
+except Exception as e:
+    logger.error(f"error while connecting to redis: {e}")
+    redis_client = None
 
 # FastAPI Setup
+logger.debug("setting up FastAPI")
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -138,6 +153,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+logger.debug("FastAPI setup done")
 
 
 class IndexInput(BaseModel):
