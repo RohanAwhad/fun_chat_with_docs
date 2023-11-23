@@ -33,9 +33,7 @@ logger.debug("Microservice URLs and API keys loaded")
 # LLM Setup
 
 # llm prompt
-prompt = """Answer the question provided at the end, using the following chunks:
----
-### Chunks:
+prompt = """### Chunks:
 
 {retrieved_chunks}
 ---
@@ -48,7 +46,13 @@ REFERENCE_SIZE = int(os.getenv("REFERENCE_SIZE", 5))
 def gpt_completion(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-1106",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {
+                "role": "system",
+                "content": "Answer the question provided at the end, using the following chunks as references. Answer in detail.",
+            },
+            {"role": "user", "content": prompt},
+        ],
         temperature=LLM_TEMPERATURE,
     )
     return response["choices"][0]["message"]["content"]
