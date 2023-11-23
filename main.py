@@ -54,6 +54,7 @@ def gpt_completion(prompt):
 
 
 # ES Setup
+logger.debug("connecting to ES")
 try:
     if "FOUNDELASTICSEARCH_URL" in os.environ:
         url = os.environ["FOUNDELASTICSEARCH_URL"]
