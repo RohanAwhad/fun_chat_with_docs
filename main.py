@@ -63,7 +63,7 @@ try:
         url = urlparse(os.environ.get("SEARCHBOX_URL"))
 
         es_client = elasticsearch.Elasticsearch(
-            [url.host],
+            [url.hostname],
             http_auth=(url.username, url.password),
             scheme=url.scheme,
             port=url.port,
