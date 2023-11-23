@@ -5,34 +5,6 @@ services:
   redis:
     image: "redis:alpine"
 
-  crawler:
-    build: ${CRAWLER_BUILD}
-    command: "uvicorn main:app --host 0.0.0.0 --port 8001"
-    depends_on:
-      - redis
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-
-  readable:
-    build: ${READABLE_BUILD}
-    command: "uvicorn api:app --host 0.0.0.0 --port 8002"
-    depends_on:
-      - redis
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=1
-
-  embedder:
-    build: ${EMBEDDER_BUILD}
-    command: "uvicorn main:app --host 0.0.0.0 --port 8003"
-    environment:
-      - MODEL_PATH=${EMBEDDER_MODEL_PATH}
-    volumes:
-      - ${EMBEDDER_VOLUME}
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
     environment:
@@ -47,7 +19,7 @@ services:
 
   controller:
     build:
-      context: ./src
+      context: .
       dockerfile: ./Dockerfile
     command: "uvicorn main:app --host 0.0.0.0 --port 8000"
     ports:
@@ -56,8 +28,6 @@ services:
       - ./logs:/app/logs
     depends_on:
       - redis
-      - readable
-      - embedder
       - elasticsearch
     environment:
       - LOGGING_DIR=/app/logs
@@ -68,11 +38,11 @@ services:
       - ES_PORT=9200
       - ES_INDEX=articles
       - ES_SEARCH_SIZE=50
-      - EMBED_DIM=768
+      - EMBED_DIM=384
       - REFERENCE_SIZE=10
-      - LLM_TEMPERATURE=0.5
+      - LLM_TEMPERATURE=0.4
       - CRAWLER_URL=https://fun-crawler-633f94e2f022.herokuapp.com/crawl
-      - READABLE_URL=http://readable:8002/convert
-      - EMBEDDER_URL=http://embedder:8003/embed_batch
+      - READABLE_URL=https://fun-readable-cd6ed9e43b50.herokuapp.com/convert
+      - EMBEDDER_URL=https://fun-embedder-a83c86056e29.herokuapp.com/embed_batch
       - RERANKER_URL=https://fun-reranker-84b02fb456da.herokuapp.com/rerank
       - OPENAI_API_KEY=${OPENAI_API_KEY}
