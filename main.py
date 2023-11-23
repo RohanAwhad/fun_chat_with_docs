@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from nltk.tokenize import sent_tokenize
 from pydantic import BaseModel
+from urllib.parse import urlparse
 
 if "LOGGING_DIR" in os.environ:
     LOGGING_DIR = os.getenv("LOGGING_DIR", "logs")
@@ -57,6 +58,16 @@ try:
     if "FOUNDELASTICSEARCH_URL" in os.environ:
         url = os.environ["FOUNDELASTICSEARCH_URL"]
         es_client = elasticsearch.Elasticsearch(url)
+
+    elif "SEARCHBOX_URL" in os.environ:
+        url = urlparse(os.environ.get("SEARCHBOX_URL"))
+
+        es_client = elasticsearch.Elasticsearch(
+            [url.host],
+            http_auth=(url.username, url.password),
+            scheme=url.scheme,
+            port=url.port,
+        )
 
     else:
         if "BONSAI_URL" in os.environ:
