@@ -99,7 +99,8 @@ try:
             [{"host": host, "port": port, "use_ssl": use_ssl, "http_auth": auth}]
         )
 
-    es_client.ping()
+    if es_client.ping():
+        raise ValueError("Connection failed")
     logger.debug("connected to ES")
 except Exception as e:
     logger.error(f"error while connecting to ES: {e}")
