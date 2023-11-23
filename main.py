@@ -205,7 +205,11 @@ async def index(inp: IndexInput):
             logger.error(f"error while processing '{final_url}': {e}")
 
     chunk_size = 3
+    link_chunks = []
     for link, text in link_to_text.items():
+        logger.debug(f"processing '{link}' with {len(chunks)} chunks")
+        logger.debug(f"chunks: {chunks}")
+
         # extract sentences
         sentences = [x for x in sent_tokenize(text) if x]
         chunks = [
@@ -215,17 +219,18 @@ async def index(inp: IndexInput):
         if not chunks:
             continue
 
-        logger.debug(f"processing '{link}' with {len(chunks)} chunks")
-        logger.debug(f"chunks: {chunks}")
+        link_chunks.extend([(link, x) for x in chunks])
 
-        # call embedder
-        logger.debug(f"calling embedder for '{link}'")
-        res = requests.post(EMBEDDER_URL, json=chunks)
-        logger.debug(f"embedder response: {res.status_code}")
-        data = res.json()
-        embeddings = data["embeddings"]
-        for chunk, embedding in zip(chunks, embeddings):
-            add_to_es(link, chunk, embedding)
+    all_chunks = [chunk for _, chunk in link_chunks]
+
+    # call embedder
+    logger.debug(f"calling embedder")
+    res = requests.post(EMBEDDER_URL, json=all_chunks)
+    logger.debug(f"embedder response: {res.status_code}")
+    data = res.json()
+    embeddings = data["embeddings"]
+    for (link, chunk), embedding in zip(link_chunks, embeddings):
+        add_to_es(link, chunk, embedding)
 
     logger.info("indexing done")
     return IndexOutput(status="success")
