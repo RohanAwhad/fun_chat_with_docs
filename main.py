@@ -53,30 +53,37 @@ def gpt_completion(prompt):
 
 
 # ES Setup
-if "BONSAI_URL" in os.environ:
-    bonsai_url = os.environ["BONSAI_URL"]
-    auth = re.search("https\:\/\/(.*)\@", bonsai_url).group(1).split(":")
-    host = bonsai_url.replace("https://%s:%s@" % (auth[0], auth[1]), "")
-
-    match = re.search("(:\d+)", host)
-    if match:
-        p = match.group(0)
-        host = host.replace(p, "")
-        port = int(p.split(":")[1])
-    else:
-        port = 443
-
-    auth = (auth[0], auth[1])
-else:
-    host = os.getenv("ES_HOST", "localhost")
-    port = os.getenv("ES_PORT", 9200)
-    auth = None
-
-use_ssl = port == 443
 try:
-    es_client = elasticsearch.Elasticsearch(
-        [{"host": host, "port": port, "use_ssl": use_ssl, "http_auth": auth}]
-    )
+    if "FOUNDELASTICSEARCH_URL" in os.environ:
+        url = os.environ["FOUNDELASTICSEARCH_URL"]
+        es_client = elasticsearch.Elasticsearch(url)
+
+    else:
+        if "BONSAI_URL" in os.environ:
+            bonsai_url = os.environ["BONSAI_URL"]
+            auth = re.search("https\:\/\/(.*)\@", bonsai_url).group(1).split(":")
+            host = bonsai_url.replace("https://%s:%s@" % (auth[0], auth[1]), "")
+
+            match = re.search("(:\d+)", host)
+            if match:
+                p = match.group(0)
+                host = host.replace(p, "")
+                port = int(p.split(":")[1])
+            else:
+                port = 443
+
+            auth = (auth[0], auth[1])
+        else:
+            host = os.getenv("ES_HOST", "localhost")
+            port = os.getenv("ES_PORT", 9200)
+            auth = None
+
+        use_ssl = port == 443
+
+        es_client = elasticsearch.Elasticsearch(
+            [{"host": host, "port": port, "use_ssl": use_ssl, "http_auth": auth}]
+        )
+
     es_client.ping()
 except Exception as e:
     logger.error(f"error while connecting to ES: {e}")
