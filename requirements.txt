@@ -4,7 +4,7 @@ pydantic
 requests
 redis
 nltk
-elasticsearch==7.17
+elasticsearch==7.11
 openai==0.28
 loguru
 gunicorn
